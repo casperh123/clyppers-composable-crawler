@@ -6,10 +6,10 @@ namespace Crawler.Core;
 
 public class Crawler
 {
-    private ICrawlFilter _filter;
-    private IFetcher _fetcher;
-    private ILinkDiscoverer _discoverer;
-    private ICrawlVisitor _visitor;
+    private readonly ICrawlFilter _filter;
+    private readonly IFetcher _fetcher;
+    private readonly ILinkDiscoverer _discoverer;
+    private readonly ICrawlVisitor _visitor;
 
     public Crawler(ICrawlFilter filter, IFetcher fetcher, ILinkDiscoverer discoverer, ICrawlVisitor visitor)
     {
@@ -41,20 +41,25 @@ public class Crawler
         {
             try
             {
+                if (!_filter.ShouldCrawl(context))
+                {
+                    continue;
+                }
+                
                 IEnumerable<CrawlContext> foundLinks = await ProcessUriAsync(context);
                 
                 foreach(CrawlContext foundLink in foundLinks)
                 {
                     queue.Enqueue(foundLink);
                 }
+                
+                totalCrawled += 1;
+                
+                progress?.Report(CrawlProgress.Progress(context, totalCrawled, queue.Count));
             }
             catch (Exception ex)
             {
                 progress?.Report(CrawlProgress.Error(context, ex, totalCrawled, queue.Count));
-            }
-            finally
-            {
-                totalCrawled += 1;
             }
         }
 
@@ -63,13 +68,8 @@ public class Crawler
     private async Task<IEnumerable<CrawlContext>> ProcessUriAsync(CrawlContext context)
     {
         Stopwatch stopwatch = Stopwatch.StartNew();
-        
-        if (!_filter.ShouldCrawl(context))
-        {
-            return [];
-        }
 
-        FetchResult fetchResult = await _fetcher.FetchAsync(context);
+        using FetchResult fetchResult = await _fetcher.FetchAsync(context);
 
         ICollection<DiscoveredLink> discoveredLinks = [];
 

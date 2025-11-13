@@ -15,16 +15,38 @@ public record CrawlProgress
         };
     }
 
+    public static CrawlProgress Completed(int totalCrawled)
+    {
+        return new CrawlProgress
+        {
+            TotalCrawled = totalCrawled
+        };
+    }
+
+    public static CrawlProgress Progress(
+        CrawlContext context,
+        int totalCrawled,
+        int queueSize
+    )
+    {
+        return new CrawlProgress
+        {
+            Context = context,
+            TotalCrawled = totalCrawled,
+            QueueSize = queueSize
+        };
+    }
+
     public static CrawlProgress Error(
         CrawlContext context,
-        Exception Error,
+        Exception error,
         int totalCrawled,
         int queueSize
         ) {
         return new CrawlProgress
         {
             Context = context,
-            ErrorMessage = Error.Message,
+            ErrorMessage = error.Message,
             TotalCrawled = totalCrawled,
             QueueSize = queueSize
         };
