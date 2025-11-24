@@ -8,7 +8,7 @@ public class SameHostFilterTests
      private readonly ICrawlFilter _sut = new SameHostFilter();
 
      [Fact]
-     public void ShouldCrawl_ReturnsTrue_WhenSameSiteReferringUri()
+     public void ShouldCrawl_ReturnsTrue_WhenSameSiteReferringUriAndUri()
      {
           Uri uri = new Uri("https://somesite.com/somesubpage");
           Uri referringUri = new Uri("https://somesite.com/");
