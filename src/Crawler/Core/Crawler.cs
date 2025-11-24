@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using Crawler.Models;
 
 namespace Crawler.Core;
