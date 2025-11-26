@@ -72,7 +72,7 @@ public class Crawler
 
         ICollection<DiscoveredLink> discoveredLinks = [];
 
-        if (fetchResult.IsSuccess)
+        if (fetchResult.Success)
         {
             discoveredLinks = await _discoverer.DiscoverLinks(fetchResult);
         }
