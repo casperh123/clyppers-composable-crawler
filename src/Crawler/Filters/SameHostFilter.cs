@@ -7,9 +7,9 @@ public class SameHostFilter() : ICrawlFilter
 {
     public bool ShouldCrawl(CrawlContext context)
     {
-        Uri? referringUri = context.ReferringUri;
-        Uri uri = context.Uri;
+        if (context.ReferringUri is null)
+            return true; 
 
-        return uri.Host.Equals(referringUri?.Host);
+        return context.Uri.Host.Equals(context.ReferringUri?.Host);
     }
 }

@@ -8,6 +8,17 @@ public class SameHostFilterTests
      private readonly ICrawlFilter _sut = new SameHostFilter();
 
      [Fact]
+     public void ShouldCrawl_ReturnTrue_OnSeedUrl()
+     {
+          Uri uri = new Uri("https://somesite.com");
+          CrawlContext crawlContext = new CrawlContext {  Uri = uri };
+
+          bool shouldCrawl = _sut.ShouldCrawl(crawlContext);
+          
+          Assert.True(shouldCrawl);
+     }
+     
+     [Fact]
      public void ShouldCrawl_ReturnsTrue_WhenSameSiteReferringUriAndUri()
      {
           Uri uri = new Uri("https://somesite.com/somesubpage");
