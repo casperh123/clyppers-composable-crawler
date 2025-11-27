@@ -32,8 +32,8 @@ public class HttpFetcherTests
         CrawlContext context = new CrawlContext { Uri = testUri };
 
         FetchResult result = await _sut.FetchAsync(context);
-        string? stringResult = result.ReadAsString();
-        byte[]? byteArrayResult = result.ReadAsByteArray();
+        string? stringResult = result.Content;
+        string? byteArrayResult = result.Content;
         
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
         Assert.True(result.Success);

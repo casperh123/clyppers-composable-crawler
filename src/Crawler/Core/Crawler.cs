@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using AngleSharp.Html.Dom;
+using AngleSharp.Html.Parser;
 using Crawler.Models;
 
 namespace Crawler.Core;
@@ -9,6 +11,7 @@ public class Crawler
     private readonly IFetcher _fetcher;
     private readonly ILinkDiscoverer _discoverer;
     private readonly ICrawlVisitor _visitor;
+    private readonly HtmlParser _htmlParser;
 
     public Crawler(ICrawlFilter filter, IFetcher fetcher, ILinkDiscoverer discoverer, ICrawlVisitor visitor)
     {
@@ -16,6 +19,7 @@ public class Crawler
         _fetcher = fetcher;
         _discoverer = discoverer;
         _visitor = visitor;
+        _htmlParser = new HtmlParser();
     }
 
 
@@ -68,13 +72,16 @@ public class Crawler
     {
         Stopwatch stopwatch = Stopwatch.StartNew();
 
-        using FetchResult fetchResult = await _fetcher.FetchAsync(context);
+        FetchResult fetchResult = await _fetcher.FetchAsync(context);
 
         ICollection<DiscoveredLink> discoveredLinks = [];
 
-        if (fetchResult.Success)
+        IHtmlDocument? document = null;
+
+        if (fetchResult.Success && fetchResult.Content is not null)
         {
-            discoveredLinks = await _discoverer.DiscoverLinks(fetchResult);
+            document = await _htmlParser.ParseDocumentAsync(fetchResult.Content);
+            discoveredLinks = await _discoverer.DiscoverLinks(fetchResult, document);
         }
 
         CrawlResult result = new CrawlResult
@@ -85,7 +92,7 @@ public class Crawler
             ElapsedTime = stopwatch.Elapsed
         };
 
-        await _visitor.VisitAsync(result);
+        await _visitor.VisitAsync(result, document);
         
         return discoveredLinks.Select(link => CrawlContext.FromDiscoveredLink(link, context.Depth + 1));
     }

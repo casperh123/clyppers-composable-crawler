@@ -35,8 +35,8 @@ public class StatusCodeCachingFetcherTests
         FetchResult uncachedResult = await _sut.FetchAsync(context);
         FetchResult cachedResult = await _sut.FetchAsync(context);
 
-        byte[]? uncachedResultContent = uncachedResult.ReadAsByteArray();
-        byte[]? cachedResultContent = cachedResult.ReadAsByteArray();
+        string? uncachedResultContent = uncachedResult.Content;
+        string? cachedResultContent = cachedResult.Content;
 
         Assert.True(uncachedResult.Success);
         Assert.True(cachedResult.Success);

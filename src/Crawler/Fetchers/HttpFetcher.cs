@@ -20,7 +20,7 @@ public class HttpFetcher : IFetcher
             cancellationToken
         );
 
-        byte[] content = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+        string content = await response.Content.ReadAsStringAsync(cancellationToken);
 
         return new FetchResult
         {
