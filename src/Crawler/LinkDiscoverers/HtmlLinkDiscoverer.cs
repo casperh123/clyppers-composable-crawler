@@ -7,27 +7,27 @@ namespace Crawler.LinkDiscoverers;
 
 public class HtmlLinkDiscoverer : ILinkDiscoverer
 {
-    public Task<ICollection<DiscoveredLink>> DiscoverLinks(
+    public async Task<ICollection<DiscoveredLink>> DiscoverLinks(
         FetchResult fetchResult, 
         IHtmlDocument? document, 
         CancellationToken cancellationToken = default)
     {
         if (document is null)
         {
-            return Task.FromResult<ICollection<DiscoveredLink>>([]);
+            return [];
         }
 
-        List<DiscoveredLink> links = document.Links
+        var links = document.Links
             .Select(el => ToDiscoveredLink(el, fetchResult.Uri))
             .OfType<DiscoveredLink>()
             .ToList();
 
-        return Task.FromResult<ICollection<DiscoveredLink>>(links);
+        return links;
     }
 
     private static DiscoveredLink? ToDiscoveredLink(IElement element, Uri baseUri)
     {
-        string? href = element.GetAttribute("href");
+        var href = element.GetAttribute("href");
         
         if (string.IsNullOrWhiteSpace(href)) return null;
         if (!Uri.TryCreate(baseUri, href, out var uri)) return null;

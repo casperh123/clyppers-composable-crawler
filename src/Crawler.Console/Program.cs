@@ -16,7 +16,7 @@ BrokenLinkVisitor brokenLinkVisitor = new BrokenLinkVisitor();
 
 Crawler.Core.Crawler crawler = new CrawlerBuilder(client)
     .WithFilter(new SameHostFilter())
-    .WithVisitor(new BrokenLinkVisitor())
+    .WithVisitor(brokenLinkVisitor)
     .Build();
 
 IProgress<CrawlProgress> progress = new Progress<CrawlProgress>(crawlProgress =>
@@ -24,14 +24,14 @@ IProgress<CrawlProgress> progress = new Progress<CrawlProgress>(crawlProgress =>
     Console.WriteLine($"Crawling Url: {crawlProgress?.Context?.Uri}, Total crawled: {crawlProgress?.TotalCrawled}, Queue size: {crawlProgress?.QueueSize}");       
 });
     
-Uri uri = new Uri("https://tuholaiskauppa.fi/");
+Uri uri = new Uri("https://trekantens-trailercenter.dk/");
 
 await crawler.CrawlWebsiteAsync(uri, progress);
 
 foreach (BrokenLinkReport brokenLink in brokenLinkVisitor.GetBrokenLinks())
 {
-    foreach ((Uri referrer, DiscoveredLink link) in brokenLink.References)
+    foreach (LinkReference link in brokenLink.References)
     {
-        Console.WriteLine($"Link: {brokenLink.Uri}, StatusCode: {brokenLink.StatusCode}, Referrer: {referrer.ToString()}, Anchor Text: {link.AnchorText}, Line: {link.Line}");
+        Console.WriteLine($"Link: {brokenLink.Url}, StatusCode: {brokenLink.StatusCode}, Referrer: {link.LinkedFrom}, Anchor Text: {link.AnchorText}, Line: {link.Line}");
     }
 }

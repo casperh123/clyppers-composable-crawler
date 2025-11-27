@@ -19,7 +19,10 @@ public class Crawler
         _fetcher = fetcher;
         _discoverer = discoverer;
         _visitor = visitor;
-        _htmlParser = new HtmlParser();
+        _htmlParser = new HtmlParser(new HtmlParserOptions
+        {
+            IsKeepingSourceReferences = true
+        });
     }
 
 
@@ -76,11 +79,8 @@ public class Crawler
     private async Task<IEnumerable<CrawlContext>> ProcessUriAsync(CrawlContext context)
     {
         Stopwatch stopwatch = Stopwatch.StartNew();
-
         FetchResult fetchResult = await _fetcher.FetchAsync(context);
-
         ICollection<DiscoveredLink> discoveredLinks = [];
-
         IHtmlDocument? document = null;
 
         if (fetchResult.Success && 
