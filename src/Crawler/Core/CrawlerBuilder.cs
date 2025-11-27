@@ -1,4 +1,7 @@
+using Crawler.Fetchers;
 using Crawler.Filters;
+using Crawler.LinkDiscoverers;
+using Crawler.Visitors;
 
 namespace Crawler.Core;
 
@@ -9,8 +12,11 @@ public class CrawlerBuilder
     private ILinkDiscoverer _discoverer;
     private ICrawlVisitor _visitor;
 
-    public CrawlerBuilder()
+    public CrawlerBuilder(HttpClient httpClient)
     {
+        _fetcher = new HttpFetcher(httpClient);
+        _discoverer = new HtmlLinkDiscoverer();
+        _visitor = new InertVisitor();
     }
 
     public CrawlerBuilder WithFilter(ICrawlFilter filter)
