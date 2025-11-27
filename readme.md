@@ -10,11 +10,6 @@ No inheritance hierarchies. No configuration objects with 50 properties. No magi
 
 The crawler visits each unique URL once, extracts links, and lets your visitor process the results. That's it.
 
-## Installation
-```bash
-dotnet add package Crawler
-```
-
 ## Quick Start
 ```csharp
 var crawler = new CrawlerBuilder(new HttpClient())
