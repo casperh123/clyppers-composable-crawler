@@ -2,9 +2,9 @@ using System.Net;
 
 namespace Crawler.Models;
 
-public struct FetchResult
+public record FetchResult
 {
-    public Uri Uri { get; set; }
+    public required Uri Uri { get; init; }
     public string? Content { get; init; }
     public required bool Success { get; init; }
     public required HttpStatusCode StatusCode { get; init; }

@@ -2,7 +2,7 @@ namespace Crawler.Models;
 
 public record DiscoveredLink
 {
-    public required Uri Uri { get; set; }
-    public int? Line { get; set; }
-    public string? AnchorText { get; set; }
+    public required Uri Uri { get; init; }
+    public int? Line { get; init; }
+    public string? AnchorText { get; init; }
 }

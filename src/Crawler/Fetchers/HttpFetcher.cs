@@ -26,6 +26,7 @@ public class HttpFetcher : IFetcher
 
         return new FetchResult
         {
+            Uri = context.Uri,
             Content = content,
             Success = response.IsSuccessStatusCode,
             StatusCode = response.StatusCode,

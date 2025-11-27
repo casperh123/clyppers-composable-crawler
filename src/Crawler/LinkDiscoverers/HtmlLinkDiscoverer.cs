@@ -17,23 +17,35 @@ public class HtmlLinkDiscoverer : ILinkDiscoverer
             return Task.FromResult<ICollection<DiscoveredLink>>([]);
         }
 
-        ICollection<DiscoveredLink> links = [];
+        List<DiscoveredLink> links = document.Links
+            .Select(el => ToDiscoveredLink(el, fetchResult.Uri))
+            .OfType<DiscoveredLink>()
+            .ToList();
 
-        foreach (IElement link in document.Links)
-        {
-            string? href = link.GetAttribute("href");
-            
-            if (string.IsNullOrWhiteSpace(href)) continue;
-            if (!Uri.TryCreate(fetchResult.Uri, href, out Uri? resolvedUri)) continue;
-            
-            links.Add(new DiscoveredLink
-            {
-                Uri = resolvedUri,
-                AnchorText = link.TextContent.Trim(),
-                Line = link.SourceReference?.Position.Line ?? -1
-            });
-        }
-
-        return Task.FromResult(links);
+        return Task.FromResult<ICollection<DiscoveredLink>>(links);
     }
+
+    private static DiscoveredLink? ToDiscoveredLink(IElement element, Uri baseUri)
+    {
+        string? href = element.GetAttribute("href");
+        
+        if (string.IsNullOrWhiteSpace(href)) return null;
+        if (!Uri.TryCreate(baseUri, href, out var uri)) return null;
+        if (!IsValidUri(uri)) return null;
+
+        return new DiscoveredLink
+        {
+            Uri = uri,
+            AnchorText = element.TextContent.Trim(),
+            Line = element.SourceReference?.Position.Line
+        };
+    }
+
+    private static bool IsValidUri(Uri uri) => uri switch
+    {
+        { Scheme: not ("http" or "https") } => false,
+        { Query.Length: > 0 } => false,
+        { Fragment.Length: > 0 } => false,
+        _ => true
+    };
 }

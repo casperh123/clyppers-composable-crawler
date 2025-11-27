@@ -28,9 +28,11 @@ public class Crawler
         IProgress<CrawlProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
+        HashSet<string> seen = [];
         Queue<CrawlContext> queue = new();
         int totalCrawled = 0;
 
+        seen.Add(startUri.AbsoluteUri);
         queue.Enqueue(new CrawlContext
         {
             Uri = startUri,
@@ -53,7 +55,10 @@ public class Crawler
                 
                 foreach(CrawlContext foundLink in foundLinks)
                 {
-                    queue.Enqueue(foundLink);
+                    if (seen.Add(foundLink.Uri.AbsoluteUri))
+                    {
+                        queue.Enqueue(foundLink);
+                    }                
                 }
                 
                 totalCrawled += 1;
@@ -78,7 +83,9 @@ public class Crawler
 
         IHtmlDocument? document = null;
 
-        if (fetchResult.Success && fetchResult.Content is not null)
+        if (fetchResult.Success && 
+            fetchResult.Content is not null
+            && fetchResult.ContentType?.Contains("html") == true)
         {
             document = await _htmlParser.ParseDocumentAsync(fetchResult.Content);
             discoveredLinks = await _discoverer.DiscoverLinks(fetchResult, document);

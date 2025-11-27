@@ -10,6 +10,7 @@ public class SameHostFilter() : ICrawlFilter
         if (context.ReferringUri is null)
             return true; 
 
+        
         return context.Uri.Host.Equals(context.ReferringUri?.Host);
     }
 }
