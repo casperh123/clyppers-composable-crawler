@@ -1,10 +1,10 @@
 using System.Net;
-using System.Text;
 
 namespace Crawler.Models;
 
-public record FetchResult
+public struct FetchResult
 {
+    public Uri Uri { get; set; }
     public string? Content { get; init; }
     public required bool Success { get; init; }
     public required HttpStatusCode StatusCode { get; init; }

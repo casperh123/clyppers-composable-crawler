@@ -94,6 +94,6 @@ public class Crawler
 
         await _visitor.VisitAsync(result, document);
         
-        return discoveredLinks.Select(link => CrawlContext.FromDiscoveredLink(link, context.Depth + 1));
+        return discoveredLinks.Select(link => CrawlContext.From(link.Uri, context.Uri, context.Depth + 1));
     }
 }

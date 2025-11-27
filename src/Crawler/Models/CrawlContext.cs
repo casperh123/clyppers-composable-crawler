@@ -6,12 +6,12 @@ public record CrawlContext
     public Uri? ReferringUri { get; set; }
     public int Depth { get; set; }
 
-    public static CrawlContext FromDiscoveredLink(DiscoveredLink discoveredLink, int depth)
+    public static CrawlContext From(Uri uri, Uri? referringUri, int depth)
     {
         return new CrawlContext
         {
-            Uri = discoveredLink.Uri,
-            ReferringUri = discoveredLink.ReferringUri,
+            Uri = uri,
+            ReferringUri = referringUri,
             Depth = depth
         };
     }

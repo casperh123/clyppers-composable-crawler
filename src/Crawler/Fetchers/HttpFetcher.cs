@@ -20,7 +20,9 @@ public class HttpFetcher : IFetcher
             cancellationToken
         );
 
-        string content = await response.Content.ReadAsStringAsync(cancellationToken);
+        string? content = response.IsSuccessStatusCode
+            ? await response.Content.ReadAsStringAsync(cancellationToken)
+            : null;
 
         return new FetchResult
         {
