@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
+using Crawl.Core.Interfaces;
 using Crawl.Models;
 
 namespace Crawl.Core;

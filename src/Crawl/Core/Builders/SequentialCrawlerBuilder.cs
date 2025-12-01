@@ -1,3 +1,6 @@
+using Crawl.Core.Crawlers;
+using Crawl.Core.Interfaces;
+
 namespace Crawl.Core.Builder;
 
 public class SequentialCrawlerBuilder : AbstractCrawlerBuilder

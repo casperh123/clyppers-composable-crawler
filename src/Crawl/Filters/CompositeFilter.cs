@@ -1,4 +1,5 @@
 using Crawl.Core;
+using Crawl.Core.Interfaces;
 using Crawl.Models;
 
 namespace Crawl.Filters;

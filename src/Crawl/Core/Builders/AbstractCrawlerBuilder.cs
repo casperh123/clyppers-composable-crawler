@@ -1,3 +1,4 @@
+using Crawl.Core.Interfaces;
 using Crawl.Fetchers;
 using Crawl.Filters;
 using Crawl.LinkDiscoverers;

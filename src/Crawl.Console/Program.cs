@@ -1,5 +1,6 @@
 ﻿using Crawl.Core;
 using Crawl.Core.Builder;
+using Crawl.Core.Builders;
 using Crawl.Filters;
 using Crawl.Models;
 using Crawl.Visitors.BrokenLink;
@@ -14,9 +15,8 @@ Crawl.Core.Crawl crawler = new CrawlerBuilder(client)
 */
 BrokenLinkVisitor brokenLinkVisitor = new BrokenLinkVisitor();
 
-Crawler crawler = new SequentialCrawlerBuilder(client)
-    .WithFilter(new SameHostFilter())
-    .WithVisitor(brokenLinkVisitor)
+Crawler crawler = new DomainParallelCrawlerBuilder(client)
+    .WithFilter(new IncludeLTTsFilter("dk"))
     .Build();
 
 IProgress<CrawlProgress> progress = new Progress<CrawlProgress>(crawlProgress =>

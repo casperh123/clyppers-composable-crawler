@@ -1,6 +1,6 @@
 using Crawl.Models;
 
-namespace Crawl.Core;
+namespace Crawl.Core.Interfaces;
 
 public interface ICrawlFilter
 {
