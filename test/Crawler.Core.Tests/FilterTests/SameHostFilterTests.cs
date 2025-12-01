@@ -13,7 +13,7 @@ public class SameHostFilterTests
      public void ShouldCrawl_ReturnTrue_OnSeedUrl()
      {
           Uri uri = new Uri("https://somesite.com");
-          CrawlContext crawlContext = new CrawlContext {  Uri = uri };
+          CrawlContext crawlContext = new CrawlContext(uri);
 
           bool shouldCrawl = _sut.ShouldCrawl(crawlContext);
           
@@ -25,7 +25,7 @@ public class SameHostFilterTests
      {
           Uri uri = new Uri("https://somesite.com/somesubpage");
           Uri referringUri = new Uri("https://somesite.com/");
-          CrawlContext context = new CrawlContext { Uri = uri, ReferringUri = referringUri};
+          CrawlContext context = new CrawlContext(uri, referringUri);
 
           bool shouldCrawl = _sut.ShouldCrawl(context);
           
@@ -37,7 +37,7 @@ public class SameHostFilterTests
      {
           Uri uri = new Uri("https://othersite.com");
           Uri referringUri = new Uri("https://somesite.com/somesubpage");
-          CrawlContext context = new CrawlContext { Uri = uri, ReferringUri = referringUri};
+          CrawlContext context = new CrawlContext(uri, referringUri);
 
           bool shouldCrawl = _sut.ShouldCrawl(context);
           
@@ -49,7 +49,7 @@ public class SameHostFilterTests
      {
           Uri uri = new Uri("https://othersite.com/somesubpage");
           Uri referringUri = new Uri("https://somesite.com/");
-          CrawlContext context = new CrawlContext { Uri = uri, ReferringUri = referringUri};
+          CrawlContext context = new CrawlContext(uri, referringUri);
 
           bool shouldCrawl = _sut.ShouldCrawl(context);
           

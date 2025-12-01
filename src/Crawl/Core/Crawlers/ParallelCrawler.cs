@@ -24,15 +24,8 @@ public class ParallelCrawler : Crawler
     {
         _seen = new ConcurrentDictionary<string, byte>();
 
-        // Queue of URLs to crawl
-        _frontier = new BufferBlock<CrawlContext>(new DataflowBlockOptions
-        {
-            // You can set BoundedCapacity if you want backpressure
-            // BoundedCapacity = 1000
-            
-        });
+        _frontier = new BufferBlock<CrawlContext>();
 
-        // Worker that processes each CrawlContext
         _worker = new ActionBlock<CrawlContext>(
             async context => await ProcessAndEnqueueLinks(context),
             new ExecutionDataflowBlockOptions
@@ -41,7 +34,6 @@ public class ParallelCrawler : Crawler
                 EnsureOrdered = false
             });
 
-        // Frontier feeds the worker; when frontier completes, worker completes.
         _frontier.LinkTo(_worker, new DataflowLinkOptions
         {
             PropagateCompletion = true
@@ -58,25 +50,17 @@ public class ParallelCrawler : Crawler
         _pending = 0;
         _progress = progress;
 
-        // Seed the crawl
         if (_seen.TryAdd(startUri.AbsoluteUri, 0))
         {
             Interlocked.Increment(ref _pending);
 
-            await _frontier.SendAsync(new CrawlContext
-            {
-                Uri = startUri,
-                ReferringUri = null,
-                Depth = 0
-            }, cancellationToken);
+            await _frontier.SendAsync(new CrawlContext(startUri), cancellationToken);
         }
 
         progress?.Report(CrawlProgress.Started());
 
-        // Observe cancellation: when cancelled, stop accepting new items.
-        using (cancellationToken.Register(() => _frontier.Complete()))
+        await using (cancellationToken.Register(() => _frontier.Complete()))
         {
-            // Wait for the worker to finish all work
             await _worker.Completion;
         }
     }
@@ -94,11 +78,9 @@ public class ParallelCrawler : Crawler
 
             foreach (CrawlContext foundLink in foundLinks)
             {
-                // Dedup here: only enqueue URLs we haven't seen
                 if (_seen.TryAdd(foundLink.Uri.AbsoluteUri, 0))
                 {
                     Interlocked.Increment(ref _pending);
-                    // Always enqueue into FRONTIER, not the worker directly
                     await _frontier.SendAsync(foundLink);
                 }
             }
@@ -113,11 +95,8 @@ public class ParallelCrawler : Crawler
         }
         finally
         {
-            // This context is fully processed (including enqueueing children)
             if (Interlocked.Decrement(ref _pending) == 0)
             {
-                // No more items in the entire system → close the frontier
-                // This will propagate completion to the worker via LinkTo.
                 _frontier.Complete();
             }
         }

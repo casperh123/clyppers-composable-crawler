@@ -1,18 +1,18 @@
 namespace Crawl.Models;
 
-public record CrawlContext
+public readonly struct CrawlContext
 {
-    public required  Uri Uri { get; set; }
-    public Uri? ReferringUri { get; set; }
-    public int Depth { get; set; }
+    public CrawlContext(Uri uri, Uri? referringUri = null, int depth = 0)
+    {
+        Uri = uri;
+        ReferringUri = referringUri;
+        Depth = depth;
+    }
+
+    public Uri Uri { get; }
+    public Uri? ReferringUri { get; }
+    public int Depth { get; }
 
     public static CrawlContext From(Uri uri, Uri? referringUri, int depth)
-    {
-        return new CrawlContext
-        {
-            Uri = uri,
-            ReferringUri = referringUri,
-            Depth = depth
-        };
-    }
+        => new(uri, referringUri, depth);
 }

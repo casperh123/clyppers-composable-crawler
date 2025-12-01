@@ -1,5 +1,5 @@
 using Crawl.Core.Builder;
-using Crawl.Core.Crawlers;
+using Crawl.Core.Crawlers.DomainParallel;
 using Crawl.Core.Interfaces;
 
 namespace Crawl.Core.Builders;
@@ -29,6 +29,7 @@ public class DomainParallelCrawlerBuilder : AbstractCrawlerBuilder
             Discoverer,
             Visitor,
             _parallelDegree
+            ,64
         );
     }
 }

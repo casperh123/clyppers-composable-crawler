@@ -18,7 +18,7 @@ public class HttpFetcherTests
     public async Task FetchAsync_Returns200()
     {
         Uri testUri = new Uri("https://crawler-test.com/status_codes/status_200");
-        CrawlContext context = new CrawlContext { Uri = testUri };
+        CrawlContext context = new CrawlContext(testUri);
 
         FetchResult result = await _sut.FetchAsync(context);
         
@@ -29,7 +29,7 @@ public class HttpFetcherTests
     public async Task FetchAsync_PopulatesEntireFetchResult()
     {
         Uri testUri = new Uri("https://crawler-test.com/status_codes/status_200");
-        CrawlContext context = new CrawlContext { Uri = testUri };
+        CrawlContext context = new CrawlContext(testUri);
 
         FetchResult result = await _sut.FetchAsync(context);
         string? stringResult = result.Content;
@@ -47,7 +47,7 @@ public class HttpFetcherTests
     public async Task FetchAsync_sucessIsFalseWhen_StatusCode500()
     {
         Uri testUri = new Uri("https://crawler-test.com/status_codes/status_500");
-        CrawlContext context = new CrawlContext { Uri = testUri };
+        CrawlContext context = new CrawlContext(testUri);
 
         FetchResult result = await _sut.FetchAsync(context);
         

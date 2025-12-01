@@ -1,6 +1,6 @@
 namespace Crawl.Models;
 
-public record DiscoveredLink
+public readonly struct DiscoveredLink
 {
     public required Uri Uri { get; init; }
     public int? Line { get; init; }

@@ -13,7 +13,7 @@ public class IncludeDomainsFilterTests
     public void ShouldCrawl(string uri, bool shouldCrawl)
     {
         ICrawlFilter filter = new IncludeDomainFilter("include.com");
-        CrawlContext context = new CrawlContext { Uri = new Uri(uri) };
+        CrawlContext context = new CrawlContext(new Uri(uri));
 
         bool computedShouldCrawl = filter.ShouldCrawl(context);
         

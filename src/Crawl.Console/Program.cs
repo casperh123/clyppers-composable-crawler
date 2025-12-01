@@ -24,6 +24,6 @@ IProgress<CrawlProgress> progress = new Progress<CrawlProgress>(crawlProgress =>
     Console.WriteLine($"Crawling Url: {crawlProgress?.Context?.Uri}, Total crawled: {crawlProgress?.TotalCrawled}, Queue size: {crawlProgress?.QueueSize}");       
 });
     
-Uri uri = new Uri("https://trekantens-trailercenter.dk/");
+Uri uri = new Uri("https://skadedyrsexperten.dk/");
 
 await crawler.CrawlAsync(uri, progress);

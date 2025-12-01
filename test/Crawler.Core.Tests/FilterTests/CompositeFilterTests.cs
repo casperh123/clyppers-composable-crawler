@@ -14,7 +14,7 @@ public class CompositeFilterTests
     {
         Uri uri = new Uri("https://somesite.com");
         Uri referringUri = new Uri("https://somesite.com/somepage");
-        CrawlContext context = new CrawlContext { Uri = uri, ReferringUri = referringUri };
+        CrawlContext context = new CrawlContext(uri, referringUri);
 
         bool shouldCrawl = _sut.ShouldCrawl(context);
         

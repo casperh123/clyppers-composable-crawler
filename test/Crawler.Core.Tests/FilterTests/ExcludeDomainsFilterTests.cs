@@ -18,7 +18,7 @@ public class ExcludeDomainsFilterTests
     public void ShouldCrawl(string uri, bool shouldCrawl)
     {
         ICrawlFilter filter = new ExcludeDomainsFilter("toexclude.com");
-        CrawlContext context = new CrawlContext { Uri = new Uri(uri) };
+        CrawlContext context = new CrawlContext(new Uri(uri));
 
         bool computedShouldCrawl = filter.ShouldCrawl(context);
         

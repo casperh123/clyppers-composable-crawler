@@ -22,16 +22,11 @@ public class SequentialCrawler : Crawler
         int totalCrawled = 0;
 
         seen.Add(startUri.AbsoluteUri);
-        queue.Enqueue(new CrawlContext
-        {
-            Uri = startUri,
-            ReferringUri = null,
-            Depth = 0
-        });
+        queue.Enqueue(new CrawlContext(startUri));
 
         progress?.Report(CrawlProgress.Started());
 
-        while (queue.TryDequeue(out CrawlContext? context) && !cancellationToken.IsCancellationRequested)
+        while (queue.TryDequeue(out CrawlContext context) && !cancellationToken.IsCancellationRequested)
         {
             try
             {
