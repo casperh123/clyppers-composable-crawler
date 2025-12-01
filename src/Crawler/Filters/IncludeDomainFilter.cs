@@ -12,6 +12,11 @@ public class IncludeDomainFilter : ICrawlFilter
         _include = new HashSet<string>(domains);
     }
     
+    public IncludeDomainFilter(ISet<string> domains)
+    {
+        _include = domains;
+    }
+    
     public bool ShouldCrawl(CrawlContext context)
     {
         return _include.Contains(context.Uri.Host);

@@ -12,6 +12,11 @@ public class ExcludeDomainsFilter : ICrawlFilter
         _exclude = new HashSet<string>(domains);
     }
     
+    public ExcludeDomainsFilter(ISet<string> domains)
+    {
+        _exclude = domains;
+    }
+    
     public bool ShouldCrawl(CrawlContext context)
     {
         return !_exclude.Contains(context.Uri.Host);
