@@ -1,0 +1,25 @@
+using Crawler.Filters;
+using Crawler.Models;
+
+namespace Crawler.Core.Tests.FilterTests;
+
+public class ExcludeDomainsFilterTests
+{
+    public ExcludeDomainsFilterTests()
+    {
+        
+    }
+
+    [Theory]
+    [InlineData("http://somethingelse.com", true)]
+    [InlineData("http://toexclude.com", false)]
+    public void ShouldCrawl(string uri, bool shouldCrawl)
+    {
+        ICrawlFilter filter = new ExcludeDomainsFilter("toexclude.com");
+        CrawlContext context = new CrawlContext { Uri = new Uri(uri) };
+
+        bool computedShouldCrawl = filter.ShouldCrawl(context);
+        
+        Assert.Equal(computedShouldCrawl, shouldCrawl);
+    }
+}

@@ -8,16 +8,26 @@ public class SameHostFilter : ICrawlFilter
 {
     private string? _rootHost;
 
+    public SameHostFilter(string? uri = null)
+    {
+        if (uri is not null)
+        {
+            _rootHost = UriNormalizer.Normalize(new Uri(uri)).Host;   
+        }
+    } 
+        
+
     public bool ShouldCrawl(CrawlContext context)
     {
-        var normalizedHost = UriNormalizer.Normalize(context.Uri).Host;
+        string normalizedHost = UriNormalizer.Normalize(context.Uri).Host;
 
-        if (_rootHost is null)
+        if (_rootHost is not null)
         {
-            _rootHost = normalizedHost;
-            return true;
+            return normalizedHost.Equals(_rootHost);
         }
-
-        return normalizedHost.Equals(_rootHost);
+        
+        _rootHost = normalizedHost;
+        
+        return true;
     }
 }

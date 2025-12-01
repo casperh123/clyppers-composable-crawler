@@ -5,7 +5,7 @@ namespace Crawler.Core.Tests.FilterTests;
 
 public class SameHostFilterTests
 {
-     private readonly ICrawlFilter _sut = new SameHostFilter();
+     private readonly ICrawlFilter _sut = new SameHostFilter("https://somesite.com");
 
      [Fact]
      public void ShouldCrawl_ReturnTrue_OnSeedUrl()
@@ -33,8 +33,8 @@ public class SameHostFilterTests
      [Fact]
      public void ShouldCrawl_ReturnsFalse_WhenNotSameSiteReferringUri()
      {
-          Uri uri = new Uri("https://somesite.com/somesubpage");
-          Uri referringUri = new Uri("https://othersite.com/");
+          Uri uri = new Uri("https://othersite.com");
+          Uri referringUri = new Uri("https://somesite.com/somesubpage");
           CrawlContext context = new CrawlContext { Uri = uri, ReferringUri = referringUri};
 
           bool shouldCrawl = _sut.ShouldCrawl(context);

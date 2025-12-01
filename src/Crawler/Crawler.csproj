@@ -4,7 +4,22 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- Package Info -->
+    <PackageId>clyppers.composable.crawler</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Casper Holten</Authors>
+    <Description>A lightweight, composable web crawler for .NET</Description>
+    <PackageTags>crawler;web;html;scraper;broken-links</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/casperh123/clyppers-composable-crawler</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/casperh123/clyppers-composable-crawler</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.4.0" />
