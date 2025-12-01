@@ -6,7 +6,8 @@ namespace Crawl.Core.Builders;
 
 public class DomainParallelCrawlerBuilder : AbstractCrawlerBuilder
 {
-    private int _parallelDegree = 4;
+    private int _parallelDegree = 1;
+    private int _workerCount = 16;
     
     public DomainParallelCrawlerBuilder(HttpClient httpClient) : base(httpClient)
     {
@@ -15,6 +16,13 @@ public class DomainParallelCrawlerBuilder : AbstractCrawlerBuilder
     public DomainParallelCrawlerBuilder WithParallelDegree(int parallelDegree)
     {
         _parallelDegree = parallelDegree;
+
+        return this;
+    }
+
+    public DomainParallelCrawlerBuilder WithWorkerCount(int workerCount)
+    {
+        _workerCount = workerCount;
 
         return this;
     }
@@ -29,7 +37,7 @@ public class DomainParallelCrawlerBuilder : AbstractCrawlerBuilder
             Discoverer,
             Visitor,
             _parallelDegree
-            ,64
+            ,_workerCount
         );
     }
 }
