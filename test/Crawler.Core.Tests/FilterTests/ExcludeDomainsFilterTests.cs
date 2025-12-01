@@ -1,5 +1,5 @@
-using Crawler.Filters;
-using Crawler.Models;
+using Crawl.Filters;
+using Crawl.Models;
 
 namespace Crawler.Core.Tests.FilterTests;
 

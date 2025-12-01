@@ -1,6 +1,6 @@
 using System.Net;
-using Crawler.Fetchers;
-using Crawler.Models;
+using Crawl.Fetchers;
+using Crawl.Models;
 
 namespace Crawler.Core.Tests.FetcherTests;
 

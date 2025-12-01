@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\Crawler\Crawler.csproj" />
+      <ProjectReference Include="..\..\src\Crawl\Crawl.csproj" />
     </ItemGroup>
 
 </Project>
