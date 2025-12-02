@@ -1,6 +1,7 @@
 using Crawl.Core;
 using Crawl.Core.Interfaces;
 using Crawl.Filters;
+using Crawl.Filters.ExclusionFilters;
 using Crawl.Models;
 
 namespace Crawler.Core.Tests.FilterTests;

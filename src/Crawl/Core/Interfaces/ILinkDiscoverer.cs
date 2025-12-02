@@ -1,9 +1,9 @@
 using AngleSharp.Html.Dom;
 using Crawl.Models;
 
-namespace Crawl.Core;
+namespace Crawl.Core.Interfaces;
 
 public interface ILinkDiscoverer
 {
-    Task<ICollection<DiscoveredLink>> DiscoverLinks(FetchResult context, IHtmlDocument? document, CancellationToken cancellationToken = default);
+    ICollection<DiscoveredLink> DiscoverLinks(FetchResult context, IHtmlDocument? document, CancellationToken cancellationToken = default);
 }

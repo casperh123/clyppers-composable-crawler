@@ -1,8 +1,8 @@
 using Crawl.Models;
 
-namespace Crawl.Core;
+namespace Crawl.Core.Interfaces;
 
 public interface IFetcher
 {
-    Task<FetchResult> FetchAsync(CrawlContext context, CancellationToken cancellationToken = default);
+    ValueTask<FetchResult> FetchAsync(CrawlContext context, CancellationToken cancellationToken = default);
 }

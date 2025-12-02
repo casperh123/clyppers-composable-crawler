@@ -39,7 +39,7 @@ public abstract class Crawler
             && fetchResult.ContentType?.Contains("html") == true)
         {
             document = await _htmlParser.ParseDocumentAsync(fetchResult.Content);
-            discoveredLinks = await Discoverer.DiscoverLinks(fetchResult, document);
+            discoveredLinks = Discoverer.DiscoverLinks(fetchResult, document);
         }
 
         CrawlResult result = new CrawlResult

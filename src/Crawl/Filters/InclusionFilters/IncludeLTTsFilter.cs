@@ -1,7 +1,7 @@
 using Crawl.Core.Interfaces;
 using Crawl.Models;
 
-namespace Crawl.Filters;
+namespace Crawl.Filters.InclusionFilters;
 
 public class IncludeLTTsFilter : ICrawlFilter
 {

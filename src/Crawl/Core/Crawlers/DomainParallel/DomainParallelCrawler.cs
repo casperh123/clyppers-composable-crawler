@@ -7,12 +7,14 @@ namespace Crawl.Core.Crawlers.DomainParallel;
 public class DomainParallelCrawler : Crawler
 {
     private readonly DomainScheduler _scheduler;
-    private readonly SeenSet _seen; // now sharded
-    private readonly Channel<CrawlContext> _workChannel;
+    private readonly SeenSet _seen;
+    private readonly Channel<CrawlContext> _work;
 
     private readonly int _workerCount;
+
     private long _totalCrawled;
-    private int _pending;
+    private long _active;
+
     private IProgress<CrawlProgress>? _progress;
     private CancellationToken _token;
 
@@ -29,9 +31,11 @@ public class DomainParallelCrawler : Crawler
         _scheduler = new DomainScheduler(maxPerDomain);
         _seen = new SeenSet(10_000_000);
 
-        _workChannel = Channel.CreateBounded<CrawlContext>(new BoundedChannelOptions(20000)
+        _work = Channel.CreateUnbounded<CrawlContext>(new UnboundedChannelOptions
         {
-            FullMode = BoundedChannelFullMode.Wait
+            SingleWriter = false,
+            SingleReader = false,
+            AllowSynchronousContinuations = false
         });
     }
 
@@ -42,73 +46,86 @@ public class DomainParallelCrawler : Crawler
     {
         _progress = progress;
         _token = cancellationToken;
-        _scheduler.Clear();
-        _totalCrawled = 0;
-        _pending = 0;
 
-        if (_seen.TryAdd(startUri.AbsoluteUri))
-        {
-            _scheduler.Enqueue(startUri, new CrawlContext(startUri));
-            Interlocked.Increment(ref _pending);
-        }
+        _seen.Clear();
+        _scheduler.Clear();
+
+        _totalCrawled = 0;
+        _active = 0;
 
         progress?.Report(CrawlProgress.Started());
 
-        Task schedulerTask = Task.Run(() => _scheduler.RunScheduler(_workChannel.Writer, _token), cancellationToken);
-        Task[] workers = Enumerable.Range(0, _workerCount)
-            .Select(_ => Task.Run(WorkerLoop, cancellationToken))
-            .ToArray();
+        string startNorm = NormalizeUrl(startUri.AbsoluteUri);
 
-        await Task.WhenAll(workers.Append(schedulerTask));
+        if (_seen.TryAdd(startNorm)
+            && Filter.ShouldCrawl(new CrawlContext(startUri)))
+        {
+            _scheduler.Enqueue(startUri, new CrawlContext(startUri));
+        }
+
+        var schedulerTask = _scheduler.RunAsync(_work.Writer, _token);
+        var workers = Enumerable.Range(0, _workerCount).Select(_ => WorkerLoop()).ToArray();
+
+        await schedulerTask;
+        _work.Writer.TryComplete();
+        await Task.WhenAll(workers);
+
+
+        progress?.Report(CrawlProgress.Completed((int)_totalCrawled));
     }
 
-    private async ValueTask WorkerLoop()
+    private async Task WorkerLoop()
     {
-        ChannelReader<CrawlContext> reader = _workChannel.Reader;
+        var reader = _work.Reader;
 
         while (await reader.WaitToReadAsync(_token))
         {
-            if (!reader.TryRead(out CrawlContext context))
-                continue;
+            while (reader.TryRead(out var ctx))
+            {
+                Interlocked.Increment(ref _active);
 
-            try
-            {
-                await ProcessAndEnqueueLinks(context);
-            }
-            finally
-            {
-                _scheduler.DecrementInFlight(context.Uri.Host);
-                if (Interlocked.Decrement(ref _pending) == 0)
-                    _workChannel.Writer.TryComplete();
+                try
+                {
+                    await ProcessAndDiscover(ctx);
+                }
+                finally
+                {
+                    _scheduler.DecrementInFlight(ctx.Uri.Host);
+                    Interlocked.Decrement(ref _active);
+                }
             }
         }
     }
 
-    private async ValueTask ProcessAndEnqueueLinks(CrawlContext context)
+    private async Task ProcessAndDiscover(CrawlContext ctx)
     {
         try
         {
-            if (!Filter.ShouldCrawl(context))
-                return;
+            IEnumerable<CrawlContext> children = await ProcessUriAsync(ctx);
 
-            IEnumerable<CrawlContext> found = await ProcessUriAsync(context);
-
-            foreach (CrawlContext child in found)
+            foreach (var child in children)
             {
-                if (_seen.TryAdd(child.Uri.AbsoluteUri))
-                {
-                    _scheduler.Enqueue(child.Uri, child);
-                    Interlocked.Increment(ref _pending);
-                }
+                string norm = NormalizeUrl(child.Uri.AbsoluteUri);
+
+                if (!_seen.TryAdd(norm))
+                    continue;
+
+                if (!Filter.ShouldCrawl(child))
+                    continue;
+
+                _scheduler.Enqueue(child.Uri, child);
             }
 
-            int crawled = (int)Interlocked.Increment(ref _totalCrawled);
-            _progress?.Report(CrawlProgress.Progress(context, crawled, _pending));
+            long crawled = Interlocked.Increment(ref _totalCrawled);
+            _progress?.Report(CrawlProgress.Progress(ctx, (int)crawled, (int)_active));
         }
         catch (Exception ex)
         {
-            int crawled = (int)Interlocked.Read(ref _totalCrawled);
-            _progress?.Report(CrawlProgress.Error(context, ex, crawled, _pending));
+            long crawled = Interlocked.Read(ref _totalCrawled);
+            _progress?.Report(CrawlProgress.Error(ctx, ex, (int)crawled, (int)_active));
         }
     }
+
+    private static string NormalizeUrl(string url)
+        => url.Trim().ToLowerInvariant();
 }

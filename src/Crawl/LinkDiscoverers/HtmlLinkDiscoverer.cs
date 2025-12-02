@@ -1,13 +1,14 @@
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using Crawl.Core;
+using Crawl.Core.Interfaces;
 using Crawl.Models;
 
 namespace Crawl.LinkDiscoverers;
 
 public class HtmlLinkDiscoverer : ILinkDiscoverer
 {
-    public async Task<ICollection<DiscoveredLink>> DiscoverLinks(
+    public ICollection<DiscoveredLink> DiscoverLinks(
         FetchResult fetchResult, 
         IHtmlDocument? document, 
         CancellationToken cancellationToken = default)
@@ -17,7 +18,7 @@ public class HtmlLinkDiscoverer : ILinkDiscoverer
             return [];
         }
 
-        var links = document.Links
+        List<DiscoveredLink> links = document.Links
             .Select(el => ToDiscoveredLink(el, fetchResult.Uri))
             .OfType<DiscoveredLink>()
             .ToList();
@@ -27,7 +28,7 @@ public class HtmlLinkDiscoverer : ILinkDiscoverer
 
     private static DiscoveredLink? ToDiscoveredLink(IElement element, Uri baseUri)
     {
-        var href = element.GetAttribute("href");
+        string? href = element.GetAttribute("href");
         
         if (string.IsNullOrWhiteSpace(href)) return null;
         if (!Uri.TryCreate(baseUri, href, out var uri)) return null;

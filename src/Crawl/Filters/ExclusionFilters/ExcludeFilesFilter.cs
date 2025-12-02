@@ -1,11 +1,11 @@
 using Crawl.Core.Interfaces;
 using Crawl.Models;
 
-namespace Crawl.Filters;
+namespace Crawl.Filters.ExclusionFilters;
 
 public class ExcludeFilesFilter : ICrawlFilter
 {
-    private readonly ISet<string> _excluded = new HashSet<string>([".pdf", ".zip"]);
+    private readonly ISet<string> _exclude = new HashSet<string>([".pdf", ".zip"]);
     
     public bool ShouldCrawl(CrawlContext context)
     {
@@ -14,7 +14,7 @@ public class ExcludeFilesFilter : ICrawlFilter
         if (string.IsNullOrEmpty(extension))
             return true;
 
-        return !_excluded.Contains(extension);
+        return !_exclude.Contains(extension);
     }
 
 }

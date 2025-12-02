@@ -1,4 +1,5 @@
 using Crawl.Core;
+using Crawl.Core.Interfaces;
 using Crawl.Models;
 
 namespace Crawl.Fetchers;
@@ -12,7 +13,7 @@ public class HttpFetcher : IFetcher
         _client = client;
     }
         
-    public async Task<FetchResult> FetchAsync(CrawlContext context, CancellationToken cancellationToken = default)
+    public async ValueTask<FetchResult> FetchAsync(CrawlContext context, CancellationToken cancellationToken = default)
     {
         using HttpResponseMessage response = await _client.GetAsync(
             context.Uri, 

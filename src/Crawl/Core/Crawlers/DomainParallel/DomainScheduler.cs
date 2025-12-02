@@ -6,175 +6,139 @@ namespace Crawl.Core.Crawlers.DomainParallel
 {
     public class DomainScheduler
     {
-        private readonly ConcurrentDictionary<string, ConcurrentQueue<CrawlContext>> _domainQueues;
-        private readonly ConcurrentDictionary<string, int> _inFlightRequests;
-        private readonly ConcurrentDictionary<string, string> _hostCache;
-        private readonly int _maxRequestsPerDomain;
+        private readonly ConcurrentDictionary<string, ConcurrentQueue<CrawlContext>> _queues = new();
+        private readonly ConcurrentDictionary<string, int> _inflight = new();
+        private readonly ConcurrentDictionary<string, int> _idleTicks = new();
 
-        private int _domainIndex;
+        private readonly int _maxPerDomain;
+        private readonly int _idleThreshold;
 
-        private readonly object _wakeLock = new object();
-        private TaskCompletionSource<bool>? _wakeSignal;
+        private readonly AsyncAutoResetEvent _wake = new();
 
-        public DomainScheduler(int maxRequestsPerDomain)
+        public DomainScheduler(int maxRequestsPerDomain, int idleThreshold = 100)
         {
-            _maxRequestsPerDomain = maxRequestsPerDomain;
-            _domainQueues = new ConcurrentDictionary<string, ConcurrentQueue<CrawlContext>>();
-            _inFlightRequests = new ConcurrentDictionary<string, int>();
-            _hostCache = new ConcurrentDictionary<string, string>();
-            _domainIndex = 0;
+            _maxPerDomain = maxRequestsPerDomain;
+            _idleThreshold = idleThreshold;
+        }
+
+        public void StopAccepting()
+        {
+            _wake.Set();
         }
 
         public void Clear()
         {
-            _domainQueues.Clear();
-            _inFlightRequests.Clear();
-            _hostCache.Clear();
-            _domainIndex = 0;
+            _queues.Clear();
+            _inflight.Clear();
+            _idleTicks.Clear();
         }
 
-        public void Enqueue(Uri uri, CrawlContext context)
+        public void Enqueue(Uri uri, CrawlContext ctx)
         {
-            string host = GetCachedHost(uri.Host);
-            ConcurrentQueue<CrawlContext> queue = _domainQueues.GetOrAdd(
-                host,
-                _ => new ConcurrentQueue<CrawlContext>());
+            string host = Normalize(uri.Host);
 
-            queue.Enqueue(context);
-            SignalWake();
+            var q = _queues.GetOrAdd(host, _ => new ConcurrentQueue<CrawlContext>());
+            q.Enqueue(ctx);
+
+            _idleTicks[host] = 0;
+            _wake.Set();
         }
 
         public void DecrementInFlight(string host)
         {
-            string normalizedHost = GetCachedHost(host);
-            _inFlightRequests.AddOrUpdate(
-                normalizedHost,
-                0,
-                (_, current) => Math.Max(0, current - 1));
+            host = Normalize(host);
 
-            SignalWake();
+            _inflight.AddOrUpdate(host, 0, (_, val) => Math.Max(0, val - 1));
+            _wake.Set();
         }
 
-        public async Task RunScheduler(ChannelWriter<CrawlContext> writer, CancellationToken cancellationToken)
+        public async Task RunAsync(ChannelWriter<CrawlContext> writer, CancellationToken token)
         {
-            while (!cancellationToken.IsCancellationRequested)
+            while (!token.IsCancellationRequested)
             {
-                if (_domainQueues.IsEmpty)
-                {
-                    await WaitForWakeAsync(cancellationToken);
-                    continue;
-                }
+                bool dispatched = false;
 
-                bool dispatchedAny = false;
-                int currentIndex = 0;
-                int domainCount = _domainQueues.Count;
-
-                foreach (KeyValuePair<string, ConcurrentQueue<CrawlContext>> pair in _domainQueues)
+                foreach (var kvp in _queues.ToArray())
                 {
-                    if (cancellationToken.IsCancellationRequested)
+                    if (token.IsCancellationRequested)
                         break;
 
-                    // Simple round-robin: skip until the domain index matches
-                    if (currentIndex < _domainIndex)
+                    string domain = kvp.Key;
+                    var queue = kvp.Value;
+
+                    int inflight = _inflight.GetOrAdd(domain, 0);
+
+                    if (inflight < _maxPerDomain &&
+                        queue.TryDequeue(out var ctx))
                     {
-                        currentIndex++;
+                        _inflight.AddOrUpdate(domain, 1, (_, v) => v + 1);
+                        await writer.WriteAsync(ctx, token);
+
+                        dispatched = true;
+                        _idleTicks[domain] = 0;
                         continue;
                     }
 
-                    string domain = pair.Key;
-                    bool dispatched = await TryDispatchDomainAsync(domain, writer, cancellationToken);
-
-                    if (dispatched)
-                    {
-                        dispatchedAny = true;
-                    }
-
-                    currentIndex++;
-                    if (currentIndex >= domainCount)
-                    {
-                        _domainIndex = 0;
-                        break;
-                    }
+                    CleanupDomainIfIdle(domain, queue);
                 }
 
-                _domainIndex++;
-                if (_domainIndex >= domainCount)
+                // Full frontier exhaustion condition: no queued items anywhere, and no inflight
+                bool anyQueued = _queues.Any(kvp => !kvp.Value.IsEmpty);
+                if (!anyQueued && _inflight.Values.All(v => v == 0))
                 {
-                    _domainIndex = 0;
+                    return;
                 }
 
-                if (!dispatchedAny)
-                {
-                    await WaitForWakeAsync(cancellationToken);
-                }
-            }
+                if (!dispatched)
+                    await _wake.WaitAsync(token);
 
-            writer.TryComplete();
-        }
-
-        private async ValueTask<bool> TryDispatchDomainAsync(
-            string domain,
-            ChannelWriter<CrawlContext> writer,
-            CancellationToken cancellationToken)
-        {
-            if (!_domainQueues.TryGetValue(domain, out ConcurrentQueue<CrawlContext>? queue))
-            {
-                return false;
-            }
-
-            if (_inFlightRequests.TryGetValue(domain, out int inFlightCount) &&
-                inFlightCount >= _maxRequestsPerDomain)
-            {
-                return false;
-            }
-
-            if (!queue.TryDequeue(out CrawlContext context))
-            {
-                _domainQueues.TryRemove(domain, out _);
-                return false;
-            }
-
-            _inFlightRequests.AddOrUpdate(domain, 1, (_, current) => current + 1);
-            await writer.WriteAsync(context, cancellationToken);
-            return true;
-        }
-
-        private string GetCachedHost(string host)
-        {
-            // Avoid creating multiple lowercased strings for the same host
-            string normalized = host.ToLowerInvariant();
-            return _hostCache.GetOrAdd(normalized, normalized);
-        }
-
-        private void SignalWake()
-        {
-            lock (_wakeLock)
-            {
-                if (_wakeSignal != null)
-                {
-                    _wakeSignal.TrySetResult(true);
-                    _wakeSignal = null;
-                }
             }
         }
 
-        private async Task WaitForWakeAsync(CancellationToken cancellationToken)
+        private void CleanupDomainIfIdle(string domain, ConcurrentQueue<CrawlContext> queue)
         {
-            TaskCompletionSource<bool> localSignal;
+            if (!queue.IsEmpty) { _idleTicks[domain] = 0; return; }
 
-            lock (_wakeLock)
+            int inflight = _inflight.GetOrAdd(domain, 0);
+            if (inflight > 0) { _idleTicks[domain] = 0; return; }
+
+            int ticks = _idleTicks.AddOrUpdate(domain, 1, (_, t) => t + 1);
+            if (ticks >= _idleThreshold)
             {
-                if (_wakeSignal == null)
-                {
-                    _wakeSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-                }
+                _queues.TryRemove(domain, out _);
+                _inflight.TryRemove(domain, out _);
+                _idleTicks.TryRemove(domain, out _);
+            }
+        }
 
-                localSignal = _wakeSignal;
+        private static string Normalize(string host)
+            => host.ToLowerInvariant();
+
+        private class AsyncAutoResetEvent
+        {
+            private readonly ConcurrentQueue<TaskCompletionSource<bool>> _waiters = new();
+            private int _signaled = 0;
+
+            public void Set()
+            {
+                if (_waiters.TryDequeue(out var w))
+                    w.TrySetResult(true);
+                else
+                    Interlocked.Exchange(ref _signaled, 1);
             }
 
-            await using (cancellationToken.Register(() => localSignal.TrySetCanceled()))
+            public Task WaitAsync(CancellationToken ct)
             {
-                await localSignal.Task;
+                if (Interlocked.Exchange(ref _signaled, 0) == 1)
+                    return Task.CompletedTask;
+
+                var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                _waiters.Enqueue(tcs);
+
+                if (ct != CancellationToken.None)
+                    ct.Register(() => tcs.TrySetCanceled(ct));
+
+                return tcs.Task;
             }
         }
     }

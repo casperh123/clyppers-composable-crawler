@@ -1,8 +1,7 @@
-using Crawl.Core;
 using Crawl.Core.Interfaces;
 using Crawl.Models;
 
-namespace Crawl.Filters;
+namespace Crawl.Filters.ExclusionFilters;
 
 public class ExcludeDomainsFilter : ICrawlFilter
 {

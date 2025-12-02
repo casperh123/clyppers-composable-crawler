@@ -23,26 +23,32 @@ public class SeenSet
     public bool TryAdd(string url)
     {
         ulong h1 = xxHash64.ComputeHash(url);
-        ulong h2 = (h1 >> 32) | 1UL; // ensure h2 is odd
+        ulong h2 = xxHash64.ComputeHash(url + "#salt");
+
         bool allSet = true;
 
         for (int i = 0; i < _hashFunctions; i++)
         {
             ulong bitIndex = (h1 + (ulong)i * h2) & _mask;
             int bucket = (int)(bitIndex >> 6);
-            ulong bit = 1UL << (int)(bitIndex & 63UL);
+            ulong bit = 1UL << (int)(bitIndex & 63);
 
-            ulong oldValue, newValue;
+            ulong oldValue = Volatile.Read(ref _buckets[bucket]);
+
+            if ((oldValue & bit) == 0)
+                allSet = false;
+
+            ulong newValue;
             do
             {
                 oldValue = Volatile.Read(ref _buckets[bucket]);
                 if ((oldValue & bit) != 0)
-                    break; // already set
-                newValue = oldValue | bit;
-            } while (Interlocked.CompareExchange(ref _buckets[bucket], newValue, oldValue) != oldValue);
+                    break;
 
-            if ((oldValue & bit) == 0)
-                allSet = false;
+                newValue = oldValue | bit;
+
+            } while (Interlocked.CompareExchange(
+                         ref _buckets[bucket], newValue, oldValue) != oldValue);
         }
 
         return !allSet;
