@@ -1,9 +1,7 @@
 ﻿using Crawl.Core;
-using Crawl.Core.Builder;
 using Crawl.Core.Builders;
 using Crawl.Filters;
 using Crawl.Filters.ExclusionFilters;
-using Crawl.Filters.InclusionFilters;
 using Crawl.Models;
 using Crawl.Visitors.BrokenLink;
 
@@ -33,6 +31,7 @@ Crawl.Core.Crawl crawler = new CrawlerBuilder(client)
 BrokenLinkVisitor brokenLinkVisitor = new BrokenLinkVisitor();
 
 Crawler crawler = new DomainParallelCrawlerBuilder(client)
+    .WithParallelDegree(4)
     .WithFilter(new SameHostFilter())
     .WithFilter(new ExcludeFilesFilter())
     .WithFilter(new ExcludeImages())
@@ -43,6 +42,6 @@ IProgress<CrawlProgress> progress = new Progress<CrawlProgress>(crawlProgress =>
     Console.WriteLine($"Crawling Url: {crawlProgress?.Context?.Uri}, Total crawled: {crawlProgress?.TotalCrawled}, Queue size: {crawlProgress?.QueueSize}");       
 });
     
-Uri uri = new Uri("https://www.trekantens-trailercenter.dk/");
+Uri uri = new Uri("https://www.trekantens-trailercenter.dk");
 
 await crawler.CrawlAsync(uri, progress);
