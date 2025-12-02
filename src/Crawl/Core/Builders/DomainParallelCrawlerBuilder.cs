@@ -1,4 +1,3 @@
-using Crawl.Core.Builder;
 using Crawl.Core.Crawlers.DomainParallel;
 using Crawl.Core.Interfaces;
 
@@ -30,12 +29,14 @@ public class DomainParallelCrawlerBuilder : AbstractCrawlerBuilder
     public override Crawler Build()
     {
         ICrawlFilter filter = GetFilter();
+        ICrawlVisitor visitor = GetVisitor();
 
         return new DomainParallelCrawler(
             filter,
             Fetcher,
             Discoverer,
-            Visitor,
+            visitor,
+            HttpClient,
             _parallelDegree
             ,_workerCount
         );

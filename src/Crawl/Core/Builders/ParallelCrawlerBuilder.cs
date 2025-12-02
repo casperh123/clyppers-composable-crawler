@@ -1,4 +1,3 @@
-using Crawl.Core.Builder;
 using Crawl.Core.Crawlers;
 using Crawl.Core.Interfaces;
 
@@ -22,12 +21,13 @@ public class ParallelCrawlerBuilder : AbstractCrawlerBuilder
     public override Crawler Build()
     {
         ICrawlFilter filter = GetFilter();
+        ICrawlVisitor visitor = GetVisitor();
 
         return new ParallelCrawler(
             filter,
             Fetcher,
             Discoverer,
-            Visitor,
+            visitor,
             _parallelDegree
         );
     }

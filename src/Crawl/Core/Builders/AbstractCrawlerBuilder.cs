@@ -4,26 +4,37 @@ using Crawl.Filters;
 using Crawl.LinkDiscoverers;
 using Crawl.Visitors;
 
-namespace Crawl.Core.Builder;
+namespace Crawl.Core.Builders;
 
 public abstract class AbstractCrawlerBuilder 
 {
     private readonly IList<ICrawlFilter> _filters = [];
+    private readonly IList<ICrawlVisitor> _visitors = [];
     protected IFetcher Fetcher;
     protected ILinkDiscoverer Discoverer;
-    protected ICrawlVisitor Visitor;
+    protected HttpClient HttpClient;
 
     public AbstractCrawlerBuilder(HttpClient httpClient)
     {
         Fetcher = new HttpFetcher(httpClient);
         Discoverer = new HtmlLinkDiscoverer();
-        Visitor = new InertVisitor();
+        HttpClient = httpClient;
     }
 
     public AbstractCrawlerBuilder WithFilter(ICrawlFilter filter)
     {
         _filters.Add(filter);
         
+        return this;
+    }
+
+    public AbstractCrawlerBuilder WithFilters(params ICrawlFilter[] filter)
+    {
+        foreach (ICrawlFilter crawlFilter in filter)
+        {
+            _filters.Add(crawlFilter);
+        }
+
         return this;
     }
 
@@ -43,18 +54,38 @@ public abstract class AbstractCrawlerBuilder
 
     public AbstractCrawlerBuilder WithVisitor(ICrawlVisitor visitor)
     {
-        Visitor = visitor;
+        _visitors.Add(visitor);
 
         return this;
     }
 
-    public ICrawlFilter GetFilter()
+    public AbstractCrawlerBuilder WithVisitors(params ICrawlVisitor[] visitors)
+    {
+        foreach (ICrawlVisitor visitor in visitors)
+        {
+            _visitors.Add(visitor);
+        }
+
+        return this;
+    }
+
+    protected ICrawlFilter GetFilter()
     {
        return _filters.Count switch
         {
             0 => new InertFilter(),
             1 => _filters.First(),
             _ => new CompositeFilter(_filters.ToArray())
+        };
+    }
+
+    protected ICrawlVisitor GetVisitor()
+    {
+        return _filters.Count switch
+        {
+            0 => new InertVisitor(),
+            1 => _visitors.First(),
+            _ => new CompositeVisitor(_visitors.ToArray())
         };
     }
 

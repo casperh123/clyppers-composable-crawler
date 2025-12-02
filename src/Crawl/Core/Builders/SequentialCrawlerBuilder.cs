@@ -1,7 +1,7 @@
 using Crawl.Core.Crawlers;
 using Crawl.Core.Interfaces;
 
-namespace Crawl.Core.Builder;
+namespace Crawl.Core.Builders;
 
 public class SequentialCrawlerBuilder : AbstractCrawlerBuilder
 {
@@ -12,12 +12,13 @@ public class SequentialCrawlerBuilder : AbstractCrawlerBuilder
     public override Crawler Build()
     {
         ICrawlFilter filter = GetFilter();
+        ICrawlVisitor visitor = GetVisitor();
         
         return new SequentialCrawler(
             filter,
             Fetcher,
             Discoverer,
-            Visitor
+            visitor
         );
     }
 }

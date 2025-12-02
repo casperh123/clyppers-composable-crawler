@@ -24,10 +24,14 @@ public class ParallelCrawler : Crawler
     {
         _seen = new ConcurrentDictionary<string, byte>();
 
-        _frontier = new BufferBlock<CrawlContext>();
+        _frontier = new BufferBlock<CrawlContext>(
+            new DataflowBlockOptions
+            {
+                BoundedCapacity = 10_000
+            });
 
         _worker = new ActionBlock<CrawlContext>(
-            async context => await ProcessAndEnqueueLinks(context),
+            ProcessAndEnqueueLinks,
             new ExecutionDataflowBlockOptions
             {
                 MaxDegreeOfParallelism = parallelDegree,
@@ -50,10 +54,10 @@ public class ParallelCrawler : Crawler
         _pending = 0;
         _progress = progress;
 
-        if (_seen.TryAdd(startUri.AbsoluteUri, 0))
+        string normalized = NormalizeUrl(startUri.AbsoluteUri);
+        if (_seen.TryAdd(normalized, 0))
         {
             Interlocked.Increment(ref _pending);
-
             await _frontier.SendAsync(new CrawlContext(startUri), cancellationToken);
         }
 
@@ -63,6 +67,8 @@ public class ParallelCrawler : Crawler
         {
             await _worker.Completion;
         }
+
+        progress?.Report(CrawlProgress.Completed((int)_totalCrawled));
     }
 
     private async Task ProcessAndEnqueueLinks(CrawlContext context)
@@ -76,22 +82,38 @@ public class ParallelCrawler : Crawler
 
             IEnumerable<CrawlContext> foundLinks = await ProcessUriAsync(context);
 
+            List<CrawlContext> newLinks = new List<CrawlContext>();
+            
             foreach (CrawlContext foundLink in foundLinks)
             {
-                if (_seen.TryAdd(foundLink.Uri.AbsoluteUri, 0))
+                string normalized = NormalizeUrl(foundLink.Uri.AbsoluteUri);
+                
+                if (string.IsNullOrEmpty(normalized))
+                    continue;
+
+                if (_seen.TryAdd(normalized, 0))
                 {
-                    Interlocked.Increment(ref _pending);
-                    await _frontier.SendAsync(foundLink);
+                    newLinks.Add(foundLink);
                 }
             }
 
-            int crawled = (int)Interlocked.Increment(ref _totalCrawled);
-            _progress?.Report(CrawlProgress.Progress(context, crawled, _frontier.Count));
+            if (newLinks.Count > 0)
+            {
+                Interlocked.Add(ref _pending, newLinks.Count);
+
+                foreach (CrawlContext link in newLinks)
+                {
+                    _frontier.Post(link);
+                }
+            }
+
+            long crawled = Interlocked.Increment(ref _totalCrawled);
+            _progress?.Report(CrawlProgress.Progress(context, (int)crawled, _frontier.Count));
         }
         catch (Exception ex)
         {
-            int crawled = (int)Interlocked.Read(ref _totalCrawled);
-            _progress?.Report(CrawlProgress.Error(context, ex, crawled, _frontier.Count));
+            long crawled = Interlocked.Read(ref _totalCrawled);
+            _progress?.Report(CrawlProgress.Error(context, ex, (int)crawled, _frontier.Count));
         }
         finally
         {
@@ -100,5 +122,19 @@ public class ParallelCrawler : Crawler
                 _frontier.Complete();
             }
         }
+    }
+
+    private static string NormalizeUrl(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return string.Empty;
+
+        string normalized = url.Trim().ToLowerInvariant();
+
+        // Remove trailing slash (except for root paths)
+        if (normalized.Length > 8 && normalized.EndsWith('/'))
+            normalized = normalized[..^1];
+
+        return normalized;
     }
 }
