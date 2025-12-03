@@ -9,7 +9,7 @@ public class ParallelCrawler : Crawler
 {
     private readonly BufferBlock<CrawlContext> _frontier;
     private readonly ActionBlock<CrawlContext> _worker;
-    private readonly ConcurrentDictionary<string, byte> _seen;
+    private readonly ConcurrentDictionary<Uri, byte> _seen;
 
     private long _totalCrawled;
     private int _pending;
@@ -22,13 +22,9 @@ public class ParallelCrawler : Crawler
         ICrawlVisitor visitor,
         int parallelDegree = 4) : base(filter, fetcher, discoverer, visitor)
     {
-        _seen = new ConcurrentDictionary<string, byte>();
+        _seen = new ConcurrentDictionary<Uri, byte>();
 
-        _frontier = new BufferBlock<CrawlContext>(
-            new DataflowBlockOptions
-            {
-                BoundedCapacity = 10_000
-            });
+        _frontier = new BufferBlock<CrawlContext>();
 
         _worker = new ActionBlock<CrawlContext>(
             ProcessAndEnqueueLinks,
@@ -54,8 +50,7 @@ public class ParallelCrawler : Crawler
         _pending = 0;
         _progress = progress;
 
-        string normalized = NormalizeUrl(startUri.AbsoluteUri);
-        if (_seen.TryAdd(normalized, 0))
+        if (_seen.TryAdd(startUri, 0))
         {
             Interlocked.Increment(ref _pending);
             await _frontier.SendAsync(new CrawlContext(startUri), cancellationToken);
@@ -86,12 +81,7 @@ public class ParallelCrawler : Crawler
             
             foreach (CrawlContext foundLink in foundLinks)
             {
-                string normalized = NormalizeUrl(foundLink.Uri.AbsoluteUri);
-                
-                if (string.IsNullOrEmpty(normalized))
-                    continue;
-
-                if (_seen.TryAdd(normalized, 0))
+                if (_seen.TryAdd(foundLink.Uri, 0))
                 {
                     newLinks.Add(foundLink);
                 }
@@ -122,19 +112,5 @@ public class ParallelCrawler : Crawler
                 _frontier.Complete();
             }
         }
-    }
-
-    private static string NormalizeUrl(string url)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-            return string.Empty;
-
-        string normalized = url.Trim().ToLowerInvariant();
-
-        // Remove trailing slash (except for root paths)
-        if (normalized.Length > 8 && normalized.EndsWith('/'))
-            normalized = normalized[..^1];
-
-        return normalized;
     }
 }
