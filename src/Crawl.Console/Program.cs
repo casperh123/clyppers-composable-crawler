@@ -33,7 +33,7 @@ BrokenLinkVisitor brokenLinkVisitor = new BrokenLinkVisitor();
 
 Crawler crawler = new DomainParallelCrawlerBuilder(client)
     .WithParallelDegree(2)
-    .WithWorkerCount(128)
+    .WithWorkerCount(64)
     .WithFilter(new IncludeLTTsFilter("dk"))
     .WithFilter(new ExcludeFilesFilter())
     .WithFilter(new ExcludeImages())
@@ -44,6 +44,6 @@ IProgress<CrawlProgress> progress = new Progress<CrawlProgress>(crawlProgress =>
     Console.WriteLine($"Crawling Url: {crawlProgress?.Context?.Uri}, Total crawled: {crawlProgress?.TotalCrawled}, Queue size: {crawlProgress?.QueueSize}");       
 });
     
-Uri uri = new Uri("https://www.trekantens-trailercenter.dk");
+Uri uri = new Uri("https://skadedyrsexperten.dk");
 
 await crawler.CrawlAsync(uri, progress);
