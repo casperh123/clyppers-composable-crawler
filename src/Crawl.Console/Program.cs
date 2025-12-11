@@ -2,6 +2,7 @@
 using Crawl.Core.Builders;
 using Crawl.Filters;
 using Crawl.Filters.ExclusionFilters;
+using Crawl.Filters.InclusionFilters;
 using Crawl.Models;
 using Crawl.Visitors.BrokenLink;
 
@@ -31,8 +32,9 @@ Crawl.Core.Crawl crawler = new CrawlerBuilder(client)
 BrokenLinkVisitor brokenLinkVisitor = new BrokenLinkVisitor();
 
 Crawler crawler = new DomainParallelCrawlerBuilder(client)
-    .WithParallelDegree(4)
-    .WithFilter(new SameHostFilter())
+    .WithParallelDegree(2)
+    .WithWorkerCount(128)
+    .WithFilter(new IncludeLTTsFilter("dk"))
     .WithFilter(new ExcludeFilesFilter())
     .WithFilter(new ExcludeImages())
     .Build();
