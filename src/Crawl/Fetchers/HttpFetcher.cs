@@ -39,7 +39,7 @@ public class HttpFetcher : IFetcher
 
         string? content = null;
 
-        if (response.IsSuccessStatusCode && isHtml && contentLength <= MaxContentLength)
+        if (response.IsSuccessStatusCode && isHtml && contentLength is null or <= MaxContentLength)
         {
             content = await response.Content.ReadAsStringAsync(cancellationToken);
         }
