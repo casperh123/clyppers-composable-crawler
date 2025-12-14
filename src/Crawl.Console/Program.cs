@@ -35,6 +35,7 @@ CrawlTimingsVisitor crawlTimingsVisitor = new CrawlTimingsVisitor();
 
 Crawler crawler = new ParallelCrawlerBuilder(client)
     .WithParallelDegree(2)
+    .WithFilter(new SameHostFilter())
     .WithFilter(new IncludeLTTsFilter("dk"))
     .WithFilter(new ExcludeFilesFilter())
     .WithFilter(new ExcludeImages())
@@ -52,5 +53,5 @@ await crawler.CrawlAsync(uri, progress);
 
 foreach (CrawlTiming timing in crawlTimingsVisitor.GetTimings())
 {
-    Console.WriteLine($"URI: {timing.Uri}, Elapsed Time: {timing.ElapsedTime}, TTFB: {timing.TTFB}, Request Duration: {timing.RequestDuration}, Elapsed Time: {timing.ElapsedTime}");
+    Console.WriteLine($"URI: {timing.Uri}, Elapsed Time: {timing.ElapsedTime.Value.Milliseconds}, TTFB: {timing.TTFB.Value.Milliseconds}, Request Duration: {timing.RequestDuration.Value.Milliseconds}");
 }

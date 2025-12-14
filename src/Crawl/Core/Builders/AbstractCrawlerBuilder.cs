@@ -81,7 +81,7 @@ public abstract class AbstractCrawlerBuilder
 
     protected ICrawlVisitor GetVisitor()
     {
-        return _filters.Count switch
+        return _visitors.Count switch
         {
             0 => new InertVisitor(),
             1 => _visitors.First(),
