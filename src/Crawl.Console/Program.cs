@@ -4,6 +4,7 @@ using Crawl.Filters;
 using Crawl.Filters.ExclusionFilters;
 using Crawl.Filters.InclusionFilters;
 using Crawl.Models;
+using Crawl.Visitors;
 using Crawl.Visitors.BrokenLink;
 
 HttpClientHandler handler = new HttpClientHandler
@@ -30,13 +31,14 @@ Crawl.Core.Crawl crawler = new CrawlerBuilder(client)
     .Build();
 */
 BrokenLinkVisitor brokenLinkVisitor = new BrokenLinkVisitor();
+CrawlTimingsVisitor crawlTimingsVisitor = new CrawlTimingsVisitor();
 
-Crawler crawler = new DomainParallelCrawlerBuilder(client)
+Crawler crawler = new ParallelCrawlerBuilder(client)
     .WithParallelDegree(2)
-    .WithWorkerCount(64)
     .WithFilter(new IncludeLTTsFilter("dk"))
     .WithFilter(new ExcludeFilesFilter())
     .WithFilter(new ExcludeImages())
+    .WithVisitor(crawlTimingsVisitor)
     .Build();
 
 IProgress<CrawlProgress> progress = new Progress<CrawlProgress>(crawlProgress =>
@@ -47,3 +49,8 @@ IProgress<CrawlProgress> progress = new Progress<CrawlProgress>(crawlProgress =>
 Uri uri = new Uri("https://skadedyrsexperten.dk");
 
 await crawler.CrawlAsync(uri, progress);
+
+foreach (CrawlTiming timing in crawlTimingsVisitor.GetTimings())
+{
+    Console.WriteLine($"URI: {timing.Uri}, Elapsed Time: {timing.ElapsedTime}, TTFB: {timing.TTFB}, Request Duration: {timing.RequestDuration}, Elapsed Time: {timing.ElapsedTime}");
+}
