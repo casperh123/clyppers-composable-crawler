@@ -32,14 +32,15 @@ Crawl.Core.Crawl crawler = new CrawlerBuilder(client)
 */
 BrokenLinkVisitor brokenLinkVisitor = new BrokenLinkVisitor();
 CrawlTimingsVisitor crawlTimingsVisitor = new CrawlTimingsVisitor();
+OneProviderVisitor visitor = new OneProviderVisitor();
 
 Crawler crawler = new ParallelCrawlerBuilder(client)
     .WithParallelDegree(2)
+    .WithFilter(new DepthFilter(1))
     .WithFilter(new SameHostFilter())
-    .WithFilter(new IncludeLTTsFilter("dk"))
     .WithFilter(new ExcludeFilesFilter())
     .WithFilter(new ExcludeImages())
-    .WithVisitor(crawlTimingsVisitor)
+    .WithVisitor(visitor)
     .Build();
 
 IProgress<CrawlProgress> progress = new Progress<CrawlProgress>(crawlProgress =>
@@ -47,11 +48,16 @@ IProgress<CrawlProgress> progress = new Progress<CrawlProgress>(crawlProgress =>
     Console.WriteLine($"Crawling Url: {crawlProgress?.Context?.Uri}, Total crawled: {crawlProgress?.TotalCrawled}, Queue size: {crawlProgress?.QueueSize}");       
 });
     
-Uri uri = new Uri("https://skadedyrsexperten.dk");
+Uri uri = new Uri("https://oneprovider.com/");
 
 await crawler.CrawlAsync(uri, progress);
 
 foreach (CrawlTiming timing in crawlTimingsVisitor.GetTimings())
 {
     Console.WriteLine($"URI: {timing.Uri}, Elapsed Time: {timing.ElapsedTime.Value.Milliseconds}, TTFB: {timing.TTFB.Value.Milliseconds}, Request Duration: {timing.RequestDuration.Value.Milliseconds}");
+}
+
+foreach (ServerInfo info in visitor.servers.OrderBy(server => server.PriceUsd))
+{
+    Console.WriteLine(info);
 }
