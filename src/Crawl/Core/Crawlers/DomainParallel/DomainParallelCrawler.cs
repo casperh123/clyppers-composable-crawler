@@ -43,7 +43,7 @@ public class DomainParallelCrawler : Crawler
                 {
                     if (Interlocked.Decrement(ref _pendingWork) == 0)
                     {
-                        _crawlProcessor.Complete();
+                        _crawlProcessor?.Complete();
                     }
                 }
             },

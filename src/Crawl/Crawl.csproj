@@ -7,7 +7,7 @@
 
     <!-- Package Info -->
     <PackageId>clyppers.composable.crawler</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Casper Holten</Authors>
     <Description>A lightweight, composable web crawler for .NET</Description>
     <PackageTags>crawler;web;html;scraper;broken-links</PackageTags>

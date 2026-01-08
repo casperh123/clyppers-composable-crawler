@@ -12,7 +12,7 @@ public abstract class AbstractCrawlerBuilder
     private readonly IList<ICrawlVisitor> _visitors = [];
     protected IFetcher Fetcher;
     protected ILinkDiscoverer Discoverer;
-    protected HttpClient HttpClient;
+    protected readonly HttpClient HttpClient;
 
     public AbstractCrawlerBuilder(HttpClient httpClient)
     {
