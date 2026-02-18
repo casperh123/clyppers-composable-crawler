@@ -25,7 +25,7 @@ public class SameHostFilterTests
      {
           Uri uri = new Uri("https://somesite.com/somesubpage");
           Uri referringUri = new Uri("https://somesite.com/");
-          CrawlContext context = new CrawlContext(uri, referringUri);
+          CrawlContext context = new CrawlContext(uri);
 
           bool shouldCrawl = _sut.ShouldCrawl(context);
           
@@ -37,7 +37,7 @@ public class SameHostFilterTests
      {
           Uri uri = new Uri("https://othersite.com");
           Uri referringUri = new Uri("https://somesite.com/somesubpage");
-          CrawlContext context = new CrawlContext(uri, referringUri);
+          CrawlContext context = new CrawlContext(uri);
 
           bool shouldCrawl = _sut.ShouldCrawl(context);
           
@@ -49,7 +49,7 @@ public class SameHostFilterTests
      {
           Uri uri = new Uri("https://othersite.com/somesubpage");
           Uri referringUri = new Uri("https://somesite.com/");
-          CrawlContext context = new CrawlContext(uri, referringUri);
+          CrawlContext context = new CrawlContext(uri);
 
           bool shouldCrawl = _sut.ShouldCrawl(context);
           

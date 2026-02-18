@@ -20,7 +20,7 @@ public class HttpFetcherTests
         Uri testUri = new Uri("https://crawler-test.com/status_codes/status_200");
         CrawlContext context = new CrawlContext(testUri);
 
-        FetchResult result = await _sut.FetchAsync(context);
+        FetchResult result = await _sut.FetchAsync(context.Uri);
         
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
     }
@@ -31,9 +31,9 @@ public class HttpFetcherTests
         Uri testUri = new Uri("https://crawler-test.com/status_codes/status_200");
         CrawlContext context = new CrawlContext(testUri);
 
-        FetchResult result = await _sut.FetchAsync(context);
-        string? stringResult = result.Content;
-        string? byteArrayResult = result.Content;
+        FetchResult result = await _sut.FetchAsync(context.Uri);
+        string? stringResult = result.Content.ToString();
+        string? byteArrayResult = result.Content.ToString();
         
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
         Assert.True(result.Success);
@@ -49,7 +49,7 @@ public class HttpFetcherTests
         Uri testUri = new Uri("https://crawler-test.com/status_codes/status_500");
         CrawlContext context = new CrawlContext(testUri);
 
-        FetchResult result = await _sut.FetchAsync(context);
+        FetchResult result = await _sut.FetchAsync(context.Uri);
         
         Assert.Equal(HttpStatusCode.InternalServerError, result.StatusCode);
         Assert.False(result.Success);

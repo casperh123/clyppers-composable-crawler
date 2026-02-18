@@ -6,11 +6,13 @@ namespace Crawl.Models;
 public record FetchResult
 {
     public required Uri Uri { get; init; }
-    public string? Content { get; init; }
+    public byte[]? Content { get; init; }
     public required bool Success { get; init; }
     public required HttpStatusCode StatusCode { get; init; }
     public HttpResponseHeaders? Headers { get; init; }
     public string? ContentType { get; init; }
     public TimeSpan? TTFB { get; init; }
     public TimeSpan? RequestDuration { get; init; }
+
+    public Stream ContentAsStream() => new MemoryStream(Content);
 }

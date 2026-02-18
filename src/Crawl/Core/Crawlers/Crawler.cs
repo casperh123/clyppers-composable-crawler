@@ -31,14 +31,14 @@ public abstract class Crawler
     protected async Task<IEnumerable<CrawlContext>> ProcessUriAsync(CrawlContext context)
     {
         Stopwatch stopwatch = Stopwatch.StartNew();
-        FetchResult fetchResult = await Fetcher.FetchAsync(context);
+        FetchResult fetchResult = await Fetcher.FetchAsync(context.Uri);
         ICollection<DiscoveredLink> discoveredLinks = [];
         IHtmlDocument? document = null;
 
         if (fetchResult is { Success: true, Content: not null }
             && fetchResult.ContentType?.Contains("html") == true)
         {
-            document = await _htmlParser.ParseDocumentAsync(fetchResult.Content);
+            document = await _htmlParser.ParseDocumentAsync(fetchResult.ContentAsStream());
             discoveredLinks = Discoverer.DiscoverLinks(fetchResult, document);
         }
 
@@ -52,6 +52,6 @@ public abstract class Crawler
 
         await Visitor.VisitAsync(result, document);
         
-        return discoveredLinks.Select(link => CrawlContext.From(link.Uri, context.Uri, context.Depth + 1));
+        return discoveredLinks.Select(link => new CrawlContext(link.Uri, context.Depth + 1));
     }
 }

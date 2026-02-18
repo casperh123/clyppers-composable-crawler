@@ -4,5 +4,5 @@ namespace Crawl.Core.Interfaces;
 
 public interface IFetcher
 {
-    ValueTask<FetchResult> FetchAsync(CrawlContext context, CancellationToken cancellationToken = default);
+    ValueTask<FetchResult> FetchAsync(Uri uri, CancellationToken cancellationToken = default);
 }

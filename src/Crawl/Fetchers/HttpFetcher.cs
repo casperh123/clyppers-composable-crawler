@@ -21,12 +21,12 @@ public class HttpFetcher : IFetcher
         _client = client;
     }
         
-    public async ValueTask<FetchResult> FetchAsync(CrawlContext context, CancellationToken cancellationToken = default)
+    public async ValueTask<FetchResult> FetchAsync(Uri uri, CancellationToken cancellationToken = default)
     {
         Stopwatch stopwatch = Stopwatch.StartNew();
         
         using HttpResponseMessage response = await _client.GetAsync(
-            context.Uri, 
+            uri, 
             HttpCompletionOption.ResponseHeadersRead, 
             cancellationToken
         );
@@ -37,18 +37,18 @@ public class HttpFetcher : IFetcher
         string? contentType = response.Content.Headers.ContentType?.MediaType;
         bool isHtml = contentType != null && AllowedContentTypes.Contains(contentType);
 
-        string? content = null;
+        byte[]? content = null;
 
         if (response.IsSuccessStatusCode && isHtml && contentLength is null or <= MaxContentLength)
         {
-            content = await response.Content.ReadAsStringAsync(cancellationToken);
+            content = await response.Content.ReadAsByteArrayAsync(cancellationToken);
         }
 
         TimeSpan requestDuration = stopwatch.Elapsed;
         
         return new FetchResult
         {
-            Uri = context.Uri,
+            Uri = uri,
             Content = content,
             Success = response.IsSuccessStatusCode,
             StatusCode = response.StatusCode,

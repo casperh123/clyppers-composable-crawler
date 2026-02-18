@@ -17,11 +17,11 @@ public class SequentialCrawler : Crawler
     public override async Task CrawlAsync(Uri startUri, IProgress<CrawlProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        HashSet<string> seen = [];
+        HashSet<Uri> seen = [];
         Queue<CrawlContext> queue = new();
         int totalCrawled = 0;
 
-        seen.Add(startUri.AbsoluteUri);
+        seen.Add(startUri);
         queue.Enqueue(new CrawlContext(startUri));
 
         progress?.Report(CrawlProgress.Started());
@@ -39,7 +39,7 @@ public class SequentialCrawler : Crawler
 
                 foreach (CrawlContext foundLink in foundLinks)
                 {
-                    if (seen.Add(foundLink.Uri.AbsoluteUri))
+                    if (seen.Add(foundLink.Uri))
                     {
                         queue.Enqueue(foundLink);
                     }
