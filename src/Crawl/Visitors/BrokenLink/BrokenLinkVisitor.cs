@@ -12,13 +12,13 @@ public class BrokenLinkVisitor : ICrawlVisitor
 
     public Task VisitAsync(CrawlResult result, IHtmlDocument? document, CancellationToken cancellationToken = default)
     {
-        var currentUrl = result.Context.Uri.AbsoluteUri;
+        string currentUrl = result.Context.Uri.AbsoluteUri;
 
         _statusCodes[currentUrl] = result.FetchResult.StatusCode;
 
-        foreach (var link in result.DiscoveredLinks)
+        foreach (DiscoveredLink link in result.DiscoveredLinks)
         {
-            var key = link.Uri.AbsoluteUri;
+            string key = link.Uri.AbsoluteUri;
 
             if (!_references.TryGetValue(key, out var list))
             {
